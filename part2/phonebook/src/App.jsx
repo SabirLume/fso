@@ -1,23 +1,24 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import axios from 'axios'
 import Filter from './components/Filter'
 import Persons from './components/Persons'
 import PersonsForm from './components/PersonForm'
 
 const App = () => {
-  const [persons, setPersons] = useState([
-    { name: 'Arto Hellas', number: '040-123456', id: 1 },
-    { name: 'Ada Lovelace', number: '39-44-5323523', id: 2 },
-    { name: 'Dan Abramov', number: '12-43-234345', id: 3 },
-    { name: 'Mary Poppendieck', number: '39-23-6423122', id: 4 }
-  ])
-
-  const [newName, setName] = useState('')
-  const [newNumber, setNumber] = useState('')
+  const [persons, setPersons] = useState([])
+  const [name, setName] = useState('')
+  const [number, setNumber] = useState('')
   const [searchTerm, setSearchTerm] = useState('')
+
+  useEffect(() => {
+    axios.get('http://localhost:3001/persons').then(r => {
+      setPersons(r.data)
+    }).catch(e => { console.error("error getting initial data", e) })
+  }, [])
 
   const onSubmitForm = () => {
     let person = '';
-    person = persons.find(person => person.name === newName);
+    person = persons.find(person => person.name === name);
     if (person) {
       alert(`${person.name} is a duplicate name`)
       return
@@ -26,7 +27,7 @@ const App = () => {
     setPersons(n => {
       return [
         ...n,
-        { name: newName, number: newNumber }
+        { name: name, number: number }
       ]
     })
   }
@@ -56,7 +57,7 @@ const App = () => {
     <>
       <h2>Phonebook</h2>
       <Filter setSearchTerm={setSearchTerm} onSubmitSearch={onSubmitSearch} searchTerm={searchTerm} />
-      <PersonsForm setNumber={setNumber} setName={setName} newNumber={newNumber} nameName={newName} onSubmitForm={onSubmitForm} />
+      <PersonsForm setNumber={setNumber} setName={setName} newNumber={number} nameName={name} onSubmitForm={onSubmitForm} />
       <h2>Numbers</h2>
       ...
       <Persons persons={persons} />
