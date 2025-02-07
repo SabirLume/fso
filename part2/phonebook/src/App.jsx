@@ -16,6 +16,7 @@ const App = () => {
     }).catch(e => { console.error("error getting initial data", e) })
   }, [])
 
+
   const onSubmitForm = () => {
     let person = '';
     person = persons.find(person => person.name === name);
