@@ -1,9 +1,9 @@
-const Persons = ({ persons }) => {
+const Persons = ({ persons, onSubmitDelete }) => {
   return (
     <>
       {persons.map(item => (
         <>
-          <li key={item.name}>{item.name} {item.number}</li>
+          <li key={item.id}>{item.name} {item.number} <button onClick={() => onSubmitDelete(item.id)}>delete</button></li>
         </>
       ))}
     </>

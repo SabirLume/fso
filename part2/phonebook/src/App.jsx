@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
-import axios from 'axios'
 import Filter from './components/Filter'
 import Persons from './components/Persons'
 import PersonsForm from './components/PersonForm'
+import contactService from './services/contact.jsx'
 
 const App = () => {
   const [persons, setPersons] = useState([])
@@ -11,8 +11,8 @@ const App = () => {
   const [searchTerm, setSearchTerm] = useState('')
 
   useEffect(() => {
-    axios.get('http://localhost:3001/persons').then(r => {
-      setPersons(r.data)
+    contactService.getContacts().then(response => {
+      setPersons(response)
     }).catch(e => { console.error("error getting initial data", e) })
   }, [])
 
@@ -24,13 +24,17 @@ const App = () => {
       alert(`${person.name} is a duplicate name`)
       return
     }
-
-    setPersons(n => {
-      return [
-        ...n,
-        { name: name, number: number }
-      ]
-    })
+    const contact = { name: name, number: number }
+    contactService.addContact(contact)
+      .then(() => {
+        setPersons(n => {
+          return [
+            ...n,
+            contact
+          ]
+        })
+      })
+      .catch(e => console.error("error adding contact", e))
   }
 
   const onSubmitSearch = () => {
@@ -54,6 +58,17 @@ const App = () => {
     })
   }
 
+  const onSubmitDelete = id => {
+    if (window.confirm("Do you want to delete this contact?")) {
+
+      contactService.deleteContact(id).then(() => {
+        setPersons(n =>
+          n.filter(item => item.id !== id)
+        )
+      }).catch(e => console.error("error deleting contact", e))
+    }
+  }
+
   return (
     <>
       <h2>Phonebook</h2>
@@ -61,7 +76,7 @@ const App = () => {
       <PersonsForm setNumber={setNumber} setName={setName} newNumber={number} nameName={name} onSubmitForm={onSubmitForm} />
       <h2>Numbers</h2>
       ...
-      <Persons persons={persons} />
+      <Persons persons={persons} onSubmitDelete={onSubmitDelete} />
     </>
   )
 }
