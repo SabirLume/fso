@@ -1,19 +1,28 @@
 import { useState, useEffect } from 'react'
-import axios from 'axios'
 import Note from './components/Note'
+import Notification from './components/Notification'
+import Footer from './components/Footer'
 import noteService from './services/note.jsx'
+import './App.css'
+
 const App = () => {
   const [notes, setNotes] = useState([])
   const [newNote, setNewNote] = useState('')
+  const [errorMessage, setErrorMessage] = useState('')
 
   useEffect(() => {
-    noteService.getAll().then(
-      response => {
-        setNotes(response);
-      }
-    ).catch(e => {
-      console.error("error fetching notes", e)
-    });
+    noteService.getAll()
+      .then(
+        response => {
+          setNotes(response);
+        }
+      )
+      .catch(() => {
+        setErrorMessage(
+          'Error loading notes'
+        )
+        setTimeout(() => { setErrorMessage(null) }, 5000)
+      })
   }, [])
 
   const handleAddNote = async () => {
@@ -21,11 +30,19 @@ const App = () => {
       content: newNote,
       important: Math.random() < 0.5,
     }
-    noteService.create(noteObject).then(response => {
-      setNotes(n => {
-        return [...n, response]
+
+    noteService.create(noteObject)
+      .then(response => {
+        setNotes(n => {
+          return [...n, response]
+        })
       })
-    }).catch(e => console.error("error adding note", e));
+      .catch(() => {
+        setErrorMessage(
+          `Error adding note`
+        )
+        setTimeout(() => { setErrorMessage(null) }, 5000)
+      })
   }
 
   const handleToggleImportant = (id) => {
@@ -37,23 +54,32 @@ const App = () => {
       ...note,
       important: !note.important
     };
-    noteService.update(id, body).then(response => {
-      setNotes(n => {
-        const data = n.map(item => {
-          if (item.id === response.id) {
-            item.important = response.important
-          }
-          return item;
-        }).catch(e => console.error("error updating not", e));
-        return [...data]
+
+    noteService
+      .update(id, body)
+      .then(response => {
+        setNotes(n => {
+          return n.map(item => {
+            if (item.id === response.id) {
+              return response.important
+            }
+            return item;
+          })
+        })
       })
-    }
-    );
+      .catch(() => {
+        setErrorMessage(
+          `Note ${note.content} was already removed from server`
+        )
+        setTimeout(() => { setErrorMessage(null) }, 5000)
+        setNotes(notes.filter(n => n.id !== id))
+      })
   }
 
   return (
     <div>
       <h1>Notes</h1>
+      <Notification message={errorMessage} />
       <ul>
         {notes.map(note =>
           <Note key={note.id} note={note} toggleImportance={() => { handleToggleImportant(note.id) }} />
@@ -61,6 +87,7 @@ const App = () => {
       </ul>
       <input onChange={e => { setNewNote(e.target.value) }} value={newNote}></input>
       <button onClick={handleAddNote}>add note</button>
+      <Footer />
     </div >
   )
 }
