@@ -11,7 +11,7 @@ const unknownEndpoint = (req, res, next) => {
 morgan.token("type", (req, res) => JSON.stringify(req.body))
 
 
-server.use(cors({ origin: '*', optionsSuccessStatus: 200 }), express.json(), morgan(':method :type :url :status :res[content-length] - :response-time ms :type'))
+server.use(cors({ origin: '*', optionsSuccessStatus: 200 }), express.static('dist'), express.json(), morgan(':method :type :url :status :res[content-length] - :response-time ms :type'))
 
 let contacts = [
   {
