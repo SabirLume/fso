@@ -2,13 +2,14 @@ const express = require('express');
 const cors = require('cors')
 const server = express();
 const PORT = process.env.PORT || 3005;
-const origin = 'http://localhost:5173'
+const origin = 'http://localhost:5173';
+
 const corsOptions = {
   origin: origin,
   optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204
 }
 
-server.use(express.json(), cors(corsOptions))
+server.use(express.json(), cors(corsOptions), express.static('dist'))
 
 let notes = [
   {
@@ -44,17 +45,34 @@ server.post('/api/notes', (req, res) => {
     });
   }
 
-  const id = notes.length > 0 ? Math.max(...notes.map(note => Number(note.id))) : 0;
+  let id = notes.length > 0 ? Math.max(...notes.map(note => Number(note.id))) : 0;
 
   const note = {
-    id: id + 1,
+    id: (++id).toString(),
     content: body.content,
-    importance: Boolean(body.importance) || false
+    important: Boolean(body.important) || false
   }
 
   notes = notes.concat(note);
 
   res.json(note)
+})
+
+server.put('/api/notes/:id', (req, res) => {
+  const id = req.params.id;
+  let responseItem;
+  if (id) {
+    const updatedNotes = notes.map(item => {
+      if (item.id == id) {
+        responseItem = { ...item, important: !item.important };
+        return responseItem;
+      }
+      return item
+    })
+    notes = updatedNotes;
+    return res.status(201).send(responseItem)
+  }
+  res.status(404).send("Id not found")
 })
 
 

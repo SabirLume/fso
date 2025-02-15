@@ -61,7 +61,7 @@ const App = () => {
         setNotes(n => {
           return n.map(item => {
             if (item.id === response.id) {
-              return response.important
+              return { ...item, important: response.important }
             }
             return item;
           })
