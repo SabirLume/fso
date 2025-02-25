@@ -1,0 +1,15 @@
+.message {
+  color: #87fb87;
+  border-radius: 5%;
+  border-color: #74ae8e;
+  border-style: solid;
+  text-align: center;
+}
+
+.errorMessage {
+  color: red;
+  border-radius: 5%;
+  border-color: red;
+  border-style: solid;
+  text-align: center;
+}

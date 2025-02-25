@@ -1,5 +1,5 @@
 import axios from 'axios'
-const host = 'http://localhost:3001/notes'
+const host = '/api/notes'
 
 const getAll = () => {
   return axios.get(`${host}`).then(r => r.data)

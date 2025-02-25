@@ -1,107 +1,94 @@
-const express = require('express')
-const morgan = require('morgan')
-const cors = require('cors')
-
+require("dotenv").config();
+const express = require("express");
+const morgan = require("morgan");
+const cors = require("cors");
+const Contact = require("./models/contact");
 const server = express();
-const port = process.env.PORT || '3001'
-const unknownEndpoint = (req, res, next) => {
-  res.status(404).send({ error: "unknown endpoint" })
-}
+const port = process.env.PORT || process.env.DEV_PORT;
 
-morgan.token("type", (req, res) => JSON.stringify(req.body))
+const unknownEndpoint = (req, res) => {
+  res.status(404).send({ error: "unknown endpoint" });
+};
 
+morgan.token("type", (req, res) => JSON.stringify(req.body));
 
-server.use(cors({ origin: '*', optionsSuccessStatus: 200 }), express.static('dist'), express.json(), morgan(':method :type :url :status :res[content-length] - :response-time ms :type'))
+server.use(
+  cors({ origin: "*", optionsSuccessStatus: 200 }),
+  express.static("dist"),
+  express.json(),
+  morgan(
+    ":method :type :url :status :res[content-length] - :response-time ms :type",
+  ),
+);
 
-let contacts = [
-  {
-    "id": "1",
-    "name": "Arto Hellas",
-    "number": "040-123456"
-  },
-  {
-    "id": "2",
-    "name": "Ada Lovelace",
-    "number": "39-44-5323523"
-  },
-  {
-    "id": "3",
-    "name": "Dan Abramov",
-    "number": "12-43-234345"
-  },
-  {
-    "id": "4",
-    "name": "Mary Poppendieck",
-    "number": "39-23-6423122"
-  }
-]
+server.get("/api/contacts", (req, res, next) => {
+  Contact.find({})
+    .then((response) => {
+      res.json(response);
+      console.log("resonse", response);
+    })
+    .catch((e) => next(e));
+});
 
-server.get('/api/contacts', (req, res) => {
-  const count = contacts.length;
-  res.json(contacts)
-})
+server.get("/api/contacts/:id", (req, res, next) => {
+  Contact.findById(req.params["id"])
+    .then((r) => res.json(r))
+    .catch((e) => {
+      next(e);
+    });
+});
 
-server.get('/api/contacts/:id', (req, res) => {
-  const id = req.params['id']
-  const contact = contacts.find(item => item.id === id);
-  if (contact) {
-    res.json(contact);
-  } else {
-    res.status(404)
-    res.end()
-  }
-
-})
-
-server.post('/api/contacts', (req, res) => {
-  let id = Math.floor(Math.random() * 1000)
-  let name = '';
-  let number = '';
+server.post("/api/contacts", (req, res, next) => {
+  let name = "";
+  let number = "";
 
   if (req.body) {
     if (req.body?.name) {
       name = req.body.name;
     } else {
-      console.log("logging error")
-      return res.status(400).end("Missing name field")
+      console.log("logging error");
+      return res.status(400).end("Missing name field");
     }
 
     if (req.body?.number) {
       number = req.body.number;
     } else {
-      console.log("logging error")
-      return res.status(400).end("Missing number field")
+      console.log("logging error");
+      return res.status(400).end("Missing number field");
     }
-
-    const duplicateName = contacts.find(item => name === item.name);
-
-    if (duplicateName) {
-      return res.status(400).end("Name must be unique")
-    }
-
   }
 
-  const contact = {
-    id: id.toString(),
+  const contact = new Contact({
     name: req.body.name,
-    number: req.body.number
+    number: req.body.number,
+  });
+
+  contact
+    .save()
+    .then((r) => {
+      res.json(r).status(201).end();
+    })
+    .catch((e) => next(e));
+});
+
+server.delete("/api/contacts/:id", (req, res, next) => {
+  Contact.findOneAndDelete({ _id: req.params["id"] })
+    .then(() => res.status(202).end())
+    .catch((e) => {
+      next(e);
+    });
+});
+
+const handleErrors = (error, req, res, next) => {
+  if (error.name === "CastError") {
+    return response.status(400).send({ error: "malformatted id" });
   }
+  next(error);
+};
 
-  contacts = contacts.concat(contact);
-  res.json(contact)
-  res.status(201)
-  res.end()
-})
-
-server.delete('/api/contacts/:id', (req, res) => {
-  const id = req.params['id']
-  contacts = contacts.filter(item => item.id !== id);
-  res.json(contacts);
-  res.status(201)
-})
-
-server.use(unknownEndpoint)
+server.use(handleErrors);
+server.use(unknownEndpoint);
 
 server.listen(port, () => {
-  console.log(`batman on port ${port}`)
+  console.log(`batman on port ${port}`);
 });
